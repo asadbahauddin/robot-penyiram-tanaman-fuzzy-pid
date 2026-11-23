@@ -1,3 +1,5 @@
 PARAMETER/
 *.asv
 *.mat
+/*.DXF
+/*.SLDPRT
