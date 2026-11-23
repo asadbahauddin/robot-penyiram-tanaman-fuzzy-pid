@@ -25,10 +25,13 @@ hRoda = gobjects(4, 1);
 for j = 1:4, hRoda(j) = patch(ax, NaN, NaN, 'k'); end
 nS = numel(H.namaSensor);
 warnaS = [0.9 0.5 0; 0.6 0 0.8; 0 0.6 0.9; 0.6 0 0.8; 0.9 0 0];   % s_kanan kanan s_kiri kiri depan
-hRay = gobjects(nS, 1);
-for j = 1:nS, hRay(j) = plot(ax, NaN, NaN, '-', 'Color', warnaS(j,:), 'LineWidth', 1.2); end
+hRay = gobjects(nS, 1); hKotak = gobjects(nS, 1);
+for j = 1:nS
+    hRay(j) = plot(ax, NaN, NaN, '-', 'Color', warnaS(j,:), 'LineWidth', 1.2);
+    hKotak(j) = patch(ax, NaN, NaN, warnaS(j,:), 'EdgeColor', 'k');   % kotak sensor 2 x 5 cm (robot.dxf)
+end
 hAir = plot(ax, NaN, NaN, 'o', 'MarkerFaceColor', [0.2 0.5 1], 'MarkerEdgeColor', 'none', 'MarkerSize', 9);
-namaStatus = {'JELAJAH', 'MELAMBAT', 'BERHENTI', 'BELOK KIRI', 'BELOK KANAN', 'MUNDUR', 'LIHAT'};
+namaStatus = {'JELAJAH', 'MELAMBAT', 'BERHENTI', 'BELOK KIRI', 'BELOK KANAN', 'MUNDUR', 'LIHAT', 'CARI CELAH'};
 pertama = true;
 for n = 1:langkah:numel(FR)
     F = FR(n); p = F.pose;
@@ -38,8 +41,13 @@ for n = 1:langkah:numel(FR)
     J = robot_jejak(p, cfg, F.delta);
     for j = 1:4, set(hRoda(j), 'XData', J{j+1}(:,1), 'YData', J{j+1}(:,2)); end
     for j = 1:nS
-        o = lok2w(cfg.sensor.(H.namaSensor{j})(1:2), p);
+        sd = cfg.sensor.(H.namaSensor{j});
+        o = lok2w(sd(1:2), p);
         set(hRay(j), 'XData', [o(1) F.ray(j,1)], 'YData', [o(2) F.ray(j,2)]);
+        a = deg2rad(sd(3));
+        kt = [-1 -2.5; 1 -2.5; 1 2.5; -1 2.5] * [cos(a) sin(a); -sin(a) cos(a)] + sd(1:2);
+        Kw = cell2mat(arrayfun(@(i) lok2w(kt(i,:), p), (1:4)', 'UniformOutput', false));
+        set(hKotak(j), 'XData', Kw(:,1), 'YData', Kw(:,2));
     end
     sudah = H.tSiram <= F.t;
     for i = find(sudah)', set(hT(i), 'FaceColor', [0.1 0.4 1]); end
