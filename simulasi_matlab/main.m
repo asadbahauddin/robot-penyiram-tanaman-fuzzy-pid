@@ -9,7 +9,7 @@ cd(here);
 folder = fullfile(here, 'hasil'); if ~exist(folder, 'dir'), mkdir(folder); end
 
 %% ================= PILIHAN =================
-skenario = {'lurus', 'tidak_di_tengah', 'miring', 'belokan', 'belokan_sempit', 'rintangan', 'uturn'};
+skenario = {'lurus', 'tidak_di_tengah', 'miring', 'belokan', 'belokan_sempit', 'rintangan', 'jalur'};
 bandingkan = {'tidak_di_tengah', 'miring'};   % skenario untuk perbandingan PID-Fuzzy vs PID tetap
 buat_animasi = true;          % simpan GIF animasi (metode PID-Fuzzy)
 anomali_dm556 = false;        % true: tambahkan pembacaan semu ~50 cm (gangguan driver DM556)
@@ -67,7 +67,8 @@ switch nama
     case 'belokan',         W = lintasan_belokan(150);
     case 'belokan_sempit',  W = lintasan_belokan(100);
     case 'rintangan',       W = lintasan_rintangan();
-    case 'uturn',           W = lintasan_uturn(540, 100, 40, 100);
+    case 'uturn',           W = lintasan_uturn(540, 100, 40, 100);   % lintasan asumsi lama
+    case 'jalur',           W = lintasan_jalur('', 5);              % lintasan asli dari dxf/jalur.dxf
     otherwise, error('Skenario tidak dikenal: %s', nama);
 end
 end
