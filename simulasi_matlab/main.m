@@ -9,7 +9,7 @@ cd(here);
 folder = fullfile(here, 'hasil'); if ~exist(folder, 'dir'), mkdir(folder); end
 
 %% ================= PILIHAN =================
-skenario = {'lurus', 'tidak_di_tengah', 'miring', 'belokan', 'belokan_sempit', 'rintangan'};
+skenario = {'lurus', 'tidak_di_tengah', 'miring', 'belokan', 'belokan_sempit', 'rintangan', 'uturn'};
 bandingkan = {'tidak_di_tengah', 'miring'};   % skenario untuk perbandingan PID-Fuzzy vs PID tetap
 buat_animasi = true;          % simpan GIF animasi (metode PID-Fuzzy)
 anomali_dm556 = false;        % true: tambahkan pembacaan semu ~50 cm (gangguan driver DM556)
@@ -22,6 +22,7 @@ cfg.sensor.anomali_dm556 = anomali_dm556;
 fprintf('== Uji fuzzy terhadap hitungan tangan ==\n');
 uji_fuzzy;
 gambar_fuzzy(folder);
+gambar_rule(folder);
 close all;
 
 ringkas = table();
@@ -31,6 +32,8 @@ for s = skenario
         H = simulasi(W, cfg, useFuzzy);
         km = 'fuzzy'; if ~useFuzzy, km = 'pid'; end
         ekspor_log(H, fullfile(folder, sprintf('log_%s_%s.csv', W.nama, km)), true);
+        % data grafik: lintasan & kemudi aktual tiap 10 ms (pemisah ';', desimal ',' untuk Excel)
+        tulis_csv_id(H.traj, fullfile(folder, sprintf('data_lintasan_%s_%s.csv', W.nama, km)));
         plot_hasil(H, folder);
         if buat_animasi && useFuzzy
             animasi(H, fullfile(folder, sprintf('animasi_%s.gif', W.nama)), ~modeBatch);
@@ -64,6 +67,7 @@ switch nama
     case 'belokan',         W = lintasan_belokan(150);
     case 'belokan_sempit',  W = lintasan_belokan(100);
     case 'rintangan',       W = lintasan_rintangan();
+    case 'uturn',           W = lintasan_uturn(540, 100, 40, 100);
     otherwise, error('Skenario tidak dikenal: %s', nama);
 end
 end
