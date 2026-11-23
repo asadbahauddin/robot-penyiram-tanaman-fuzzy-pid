@@ -40,11 +40,11 @@ plot(t, D, 'LineWidth', 1); grid on; ylabel('cm'); ylim([0 420]);
 legend('depan', 's\_kiri', 's\_kanan', 'kiri', 'kanan', 'Location', 'best');
 title('Jarak sensor (999 = tak terbaca, tidak digambar)');
 
-nexttile; kode = 'JLBKRMS';
+nexttile; kode = 'JLBKRMSC';
 [~, sn] = ismember([L.status{:}], kode);
 stairs(t, sn, 'LineWidth', 1.2); hold on; stairs(t, L.pompa * 0.8 + 0.1, 'g', 'LineWidth', 1.5);
-yticks(1:7); yticklabels({'JELAJAH', 'MELAMBAT', 'BERHENTI', 'BELOK KIRI', 'BELOK KANAN', 'MUNDUR', 'LIHAT'});
-ylim([0 7.5]); grid on; xlabel('waktu (s)'); legend('status', 'pompa (0/1)', 'Location', 'best');
+yticks(1:8); yticklabels({'JELAJAH', 'MELAMBAT', 'BERHENTI', 'BELOK KIRI', 'BELOK KANAN', 'MUNDUR', 'LIHAT', 'CARI CELAH'});
+ylim([0 8.5]); grid on; xlabel('waktu (s)'); legend('status', 'pompa (0/1)', 'Location', 'best');
 title('Mesin keadaan dan pompa');
 for ax = findall(f1, 'Type', 'axes')', xlabel(ax, 'waktu (s)'); xlim(ax, [0 max(t(end), 1)]); end
 
