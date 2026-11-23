@@ -95,7 +95,7 @@ for t = 0:cfg.dt_ms:nMax
     v = v + (vT - v) * dtf / cfg.motor.tau;
     if abs(v) > 1e-6
         p2 = model_ackermann(pose, v, delta, dtf, cfg.L);
-        if cek_tabrakan(p2, cfg, world)
+        if cek_tabrakan(p2, cfg, world, delta)
             v = 0; nTabrak = nTabrak + 1;          % tertahan dinding (roda selip)
         else
             pose = p2;
@@ -117,6 +117,7 @@ for t = 0:cfg.dt_ms:nMax
     %% ---------- selesai? ----------
     if pose(1) > world.x_selesai, break; end
     if isfield(world, 'y_selesai') && pose(2) < world.y_selesai, break; end
+    if isfield(world, 'selesai') && world.selesai(pose), break; end
 end
 
 H.world = world; H.cfg = cfg; H.useFuzzy = useFuzzy;

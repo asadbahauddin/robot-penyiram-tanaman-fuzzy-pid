@@ -22,7 +22,7 @@ end
 hJejak = plot(ax, NaN, NaN, 'r:', 'LineWidth', 1);
 hBadan = patch(ax, NaN, NaN, [0.85 0.85 0.95], 'EdgeColor', 'k', 'LineWidth', 1.5);
 hRoda = gobjects(4, 1);
-for j = 1:4, hRoda(j) = plot(ax, NaN, NaN, 'k', 'LineWidth', 4); end
+for j = 1:4, hRoda(j) = patch(ax, NaN, NaN, 'k'); end
 nS = numel(H.namaSensor);
 warnaS = [0.9 0.5 0; 0.6 0 0.8; 0 0.6 0.9; 0.6 0 0.8; 0.9 0 0];   % s_kanan kanan s_kiri kiri depan
 hRay = gobjects(nS, 1);
@@ -35,12 +35,8 @@ for n = 1:langkah:numel(FR)
     P = robot_badan(p, cfg);
     set(hBadan, 'XData', P(:,1), 'YData', P(:,2));
     % roda: belakang lurus, depan berbelok delta
-    r = 12; wb = cfg.lebar_roda/2;
-    posR = [0 wb; 0 -wb; cfg.L wb; cfg.L -wb]; sud = [0 0 F.delta F.delta];
-    for j = 1:4
-        c0 = lok2w(posR(j,:), p); a = p(3) + sud(j);
-        set(hRoda(j), 'XData', c0(1) + [-r r]*cos(a), 'YData', c0(2) + [-r r]*sin(a));
-    end
+    J = robot_jejak(p, cfg, F.delta);
+    for j = 1:4, set(hRoda(j), 'XData', J{j+1}(:,1), 'YData', J{j+1}(:,2)); end
     for j = 1:nS
         o = lok2w(cfg.sensor.(H.namaSensor{j})(1:2), p);
         set(hRay(j), 'XData', [o(1) F.ray(j,1)], 'YData', [o(2) F.ray(j,2)]);
