@@ -67,7 +67,8 @@ for i = 1:size(W.tanaman, 1)
     if isnan(H.tSiram(i)), col = [0.2 0.7 0.2]; else, col = [0.1 0.4 1]; end
     fill(c(1) + c(3)*cos(th), c(2) + c(3)*sin(th), col, 'FaceAlpha', 0.5, 'EdgeColor', 'none');
 end
-xs = T.x + 50*cos(T.th); ys = T.y + 50*sin(T.th);    % titik sensor samping
+a = H.cfg.sensor.s_kiri(1);
+xs = T.x + a*cos(T.th); ys = T.y + a*sin(T.th);      % titik sensor samping
 h1 = plot(T.x, T.y, 'r', 'LineWidth', 1.5);
 h2 = plot(xs, ys, 'm--', 'LineWidth', 1);
 P = robot_badan([T.x(1) T.y(1) T.th(1)], H.cfg);

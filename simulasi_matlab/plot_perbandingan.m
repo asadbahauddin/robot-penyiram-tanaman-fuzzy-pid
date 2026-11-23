@@ -32,5 +32,6 @@ end
 
 function [t, y] = lateral(H)
 T = H.traj; ok = ismember(T.status, [1 2]) & abs(T.th) < deg2rad(30);
-t = T.t(ok); y = T.y(ok) + 50*sin(T.th(ok));
+xs = H.cfg.sensor.s_kiri(1);
+t = T.t(ok); y = T.y(ok) + xs*sin(T.th(ok));
 end
