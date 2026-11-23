@@ -1,0 +1,13 @@
+skenario,metode,durasi_s,Ts_rata_s,disiram,jml_tanaman,ms_tertahan,status_dilalui
+lurus,PID-Fuzzy,23.84,0.208283185840708,24,25,0,J
+lurus,PID tetap,23.84,0.208283185840708,24,25,0,J
+tidak_di_tengah,PID-Fuzzy,26.19,0.206688,24,25,0,JL
+tidak_di_tengah,PID tetap,26.45,0.206380952380952,24,25,0,JL
+miring,PID-Fuzzy,24.75,0.207067796610169,24,25,0,JL
+miring,PID tetap,25.17,0.206883333333333,24,25,0,JL
+belokan,PID-Fuzzy,32.56,0.223062068965517,14,15,0,JLSR
+belokan,PID tetap,32.4,0.222854166666667,14,15,0,JLSR
+belokan_sempit,PID-Fuzzy,50,0.210334745762712,15,16,24187,JLSRBKM
+belokan_sempit,PID tetap,50,0.210334745762712,15,16,24187,JLSRBKM
+rintangan,PID-Fuzzy,40,0.205544041450777,10,25,22007,JLSKBR
+rintangan,PID tetap,40,0.205544041450777,10,25,22007,JLSKBR

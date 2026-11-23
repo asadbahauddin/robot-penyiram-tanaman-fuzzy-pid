@@ -1,0 +1,8 @@
+Metrik,PID_Fuzzy,PID_tetap
+Overshoot (%),36.88,47.13
+Overshoot (cm),2.566,3.28
+Settling time +/-2 cm (s),10.61,21.42
+Steady-state error (cm),1.083,1.389
+IAE (cm.s),48.241,64.188
+ISE (cm^2.s),202.215,297.419
+RMSE (cm),2.858,3.437
