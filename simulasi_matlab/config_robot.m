@@ -15,14 +15,17 @@ cfg.track_d    = 40;    % cm, jarak roda depan kiri-kanan (kemudi)             [
 cfg.overhang_b = 10;    % cm, badan di belakang poros belakang  [ASUMSI: (70-50)/2]
 % Roda ikut dihitung saat cek tabrakan: roda belakang menonjol (55+5)/2 - 45/2 = 7,5 cm per sisi.
 
-%% ---------------- Posisi & arah sensor [ASUMSI] ----------------
-% [x y arah_deg] pada kerangka robot. Arah 0 = depan, +90 = kiri, -90 = kanan.
-xd = cfg.panjang - cfg.overhang_b;                  % ujung depan badan
-cfg.sensor.depan   = [xd,  0,              0];      % JSN depan
-cfg.sensor.s_kiri  = [40,  cfg.lebar/2,   90];      % HC samping kiri  (navigasi)
-cfg.sensor.s_kanan = [40, -cfg.lebar/2,  -90];      % HC samping kanan (navigasi)
-cfg.sensor.kiri    = [15,  cfg.lebar/2,   90];      % HC kiri  (deteksi tanaman)
-cfg.sensor.kanan   = [15, -cfg.lebar/2,  -90];      % HC kanan (deteksi tanaman)
+%% ---------------- Bentuk badan & sensor dari robot.dxf (SolidWorks) ----------------
+% Kerangka robot: x ke depan dari poros belakang, y ke kiri. Poros belakang 10 cm dari ekor [ASUMSI].
+% Badan: kotak 45 x 42 cm di belakang, menyempit ke moncong 25 x 15 cm di depan (total 70 cm).
+cfg.badan_poly = [-10 22.5; -10 -22.5; 32 -22.5; 45 -12.5; 60 -12.5; 60 12.5; 45 12.5; 32 22.5];
+% [x y arah_deg] tiap sensor (titik tengah kotak 2x5 cm di DXF). Arah 0 = depan, + = ke kiri.
+cfg.sensor.depan   = [60.0   0.0    0  ];   % JSN depan, di ujung moncong
+cfg.sensor.s_kiri  = [11.0  22.5   90  ];   % HC samping kiri  (navigasi), tegak lurus badan
+cfg.sensor.s_kanan = [11.0 -22.5  -90  ];   % HC samping kanan (navigasi)
+cfg.sensor.kiri    = [38.5  17.5   51.4];   % HC kiri  (deteksi tanaman), sudut depan miring
+cfg.sensor.kanan   = [38.5 -17.5  -55.5];   % HC kanan (deteksi tanaman)
+% [ASUMSI] sensor tegak lurus = samping (navigasi), sensor miring = kiri/kanan (tanaman).
 cfg.sensor.urutan  = {'s_kanan','kanan','s_kiri','kiri','depan'};  % urutan baca firmware (ECHO_PIN 1..5)
 cfg.sensor.cone_deg  = 15;     % setengah sudut pancar
 cfg.sensor.n_ray     = 7;      % jumlah sinar per kerucut
