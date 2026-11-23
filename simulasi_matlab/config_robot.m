@@ -5,20 +5,24 @@ function cfg = config_robot()
 
 %% ---------------- Dimensi robot [ASUMSI] ----------------
 % Kerangka robot: titik asal di tengah poros roda BELAKANG, x ke depan, y ke kiri.
-cfg.L          = 50;    % cm, jarak sumbu roda depan-belakang (wheelbase)      [ASUMSI]
-cfg.panjang    = 80;    % cm, panjang badan                                    [ASUMSI]
-cfg.lebar      = 60;    % cm, lebar badan                                      [ASUMSI]
-cfg.overhang_b = 15;    % cm, badan di belakang poros belakang                 [ASUMSI]
-cfg.lebar_roda = 50;    % cm, jarak roda kiri-kanan (untuk gambar)             [ASUMSI]
+cfg.L          = 50;    % cm, jarak sumbu roda depan-belakang (wheelbase)      [UKUR]
+cfg.panjang    = 70;    % cm, panjang badan                                    [UKUR]
+cfg.lebar      = 45;    % cm, lebar badan                                      [UKUR]
+cfg.d_roda     = 20;    % cm, diameter roda                                    [UKUR]
+cfg.tebal_roda = 5;     % cm, lebar/tebal roda                                 [UKUR]
+cfg.track_b    = 55;    % cm, jarak roda belakang kiri-kanan (differential)    [UKUR]
+cfg.track_d    = 40;    % cm, jarak roda depan kiri-kanan (kemudi)             [UKUR]
+cfg.overhang_b = 10;    % cm, badan di belakang poros belakang  [ASUMSI: (70-50)/2]
+% Roda ikut dihitung saat cek tabrakan: roda belakang menonjol (55+5)/2 - 45/2 = 7,5 cm per sisi.
 
 %% ---------------- Posisi & arah sensor [ASUMSI] ----------------
 % [x y arah_deg] pada kerangka robot. Arah 0 = depan, +90 = kiri, -90 = kanan.
 xd = cfg.panjang - cfg.overhang_b;                  % ujung depan badan
 cfg.sensor.depan   = [xd,  0,              0];      % JSN depan
-cfg.sensor.s_kiri  = [50,  cfg.lebar/2,   90];      % HC samping kiri  (navigasi)
-cfg.sensor.s_kanan = [50, -cfg.lebar/2,  -90];      % HC samping kanan (navigasi)
-cfg.sensor.kiri    = [20,  cfg.lebar/2,   90];      % HC kiri  (deteksi tanaman)
-cfg.sensor.kanan   = [20, -cfg.lebar/2,  -90];      % HC kanan (deteksi tanaman)
+cfg.sensor.s_kiri  = [40,  cfg.lebar/2,   90];      % HC samping kiri  (navigasi)
+cfg.sensor.s_kanan = [40, -cfg.lebar/2,  -90];      % HC samping kanan (navigasi)
+cfg.sensor.kiri    = [15,  cfg.lebar/2,   90];      % HC kiri  (deteksi tanaman)
+cfg.sensor.kanan   = [15, -cfg.lebar/2,  -90];      % HC kanan (deteksi tanaman)
 cfg.sensor.urutan  = {'s_kanan','kanan','s_kiri','kiri','depan'};  % urutan baca firmware (ECHO_PIN 1..5)
 cfg.sensor.cone_deg  = 15;     % setengah sudut pancar
 cfg.sensor.n_ray     = 7;      % jumlah sinar per kerucut
