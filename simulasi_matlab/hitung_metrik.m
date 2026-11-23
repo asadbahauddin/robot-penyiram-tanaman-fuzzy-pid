@@ -8,7 +8,7 @@ function M = hitung_metrik(H, pita_cm)
 %   IAE, ISE   : integral |y| dt dan y^2 dt;  RMSE : akar rata-rata kuadrat simpangan
 if nargin < 2, pita_cm = 2; end
 T = H.traj;
-ok = ismember(T.status, [1 2]) & abs(T.th) < deg2rad(30);
+ok = ismember(T.status, [1 2]) & abs(sin(T.th)) < sin(deg2rad(30));   % lurus (arah 0 atau 180)
 xs = H.cfg.sensor.s_kiri(1);            % posisi sensor samping di depan poros belakang
 t = T.t(ok); y = T.y(ok) + xs*sin(T.th(ok));
 y = y - H.world.y_ref(T.x(ok), T.y(ok));
