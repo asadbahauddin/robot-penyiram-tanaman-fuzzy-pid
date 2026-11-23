@@ -7,6 +7,8 @@ function [st, baris] = kendali_otomatis(st, d, dt, now, curSteps, cfg)
 %   baris    : struct satu baris log (kolom = LOG_HEADER)
 k = cfg.k; spd = cfg.steer.stepsPerDeg; maxA = cfg.steer.maxAngle;
 J=1; L=2; B=3; BK=4; BN=5; MU=6; LI=7;   % JELAJAH MELAMBAT BERHENTI BELOK_KIRI BELOK_KANAN MUNDUR LIHAT
+CA=8;                                    % v13: CARI_CELAH (maju pelan sampai satu sisi terbuka)
+v13 = isfield(k, 'versi') && k.versi >= 13;
 
 %% 0) Baca sensor + filter
 st.hL(st.hi+1) = d.s_kiri;
@@ -34,11 +36,25 @@ kananBuka = st.hR(i1) >= k.jarakBuka && st.hR(i2) >= k.jarakBuka;
 
 % deteksi macet
 macet = false;
-maju = any(st.state == [J L BK BN]) && st.motorSpeed > 0;
-if ~maju || front >= k.jarakMundur + 15 || abs(front - st.fRef) > 3
-    st.fRef = front; st.tRef = now;
-elseif now - st.tRef > 1500
-    macet = true; st.fRef = 999; st.tRef = now;
+maju = any(st.state == [J L BK BN CA]) && st.motorSpeed > 0;
+if v13 && any(st.state == [BK BN CA])
+    % v13: saat manuver, macet = motor maju tetapi depan, samping kiri & kanan (mentah)
+    %      tidak berubah > 3 cm selama 1,5 s, berapa pun jaraknya (badan menempel dinding)
+    sk = [front, st.hL(i1), st.hR(i1)];
+    if ~maju || any(abs(sk - st.mRef) > 3)
+        st.mRef = sk; st.tRef = now;
+    elseif now - st.tRef > 1500
+        macet = true; st.mRef = [999 999 999]; st.tRef = now;
+    end
+    st.fRef = front;
+else
+    if v13, dekat = front < k.jarakBelok; else, dekat = front < k.jarakMundur + 15; end
+    if ~maju || ~dekat || abs(front - st.fRef) > 3
+        st.fRef = front; st.tRef = now;
+    elseif now - st.tRef > 1500
+        macet = true; st.fRef = 999; st.tRef = now;
+    end
+    st.mRef = [999 999 999];
 end
 
 %% 1) Tentukan keadaan
@@ -48,10 +64,10 @@ if st.state == MU
     t = now - st.faseStart;
     if st.fase == 0 && t >= k.JEDA_MS && (kemudiSampai || t >= 3000)
         st.fase = 1; st.faseStart = now;
-    elseif st.fase == 1 && t >= k.waktuMundur
+    elseif st.fase == 1 && t >= ifelse(st.mundurLurus, k.waktuMundurCari, k.waktuMundur)
         st.fase = 2; st.faseStart = now;
     elseif st.fase == 2 && t >= k.JEDA_MS && (kemudiSampai || t >= 3000)
-        st.turnStartMs = now;
+        st.turnStartMs = now; st.mundurLurus = false;
         if st.turnDir > 0, st.state = BN;
         elseif st.turnDir < 0, st.state = BK;
         else, st.state = L; end
@@ -60,7 +76,8 @@ elseif st.state == BK || st.state == BN
     t = now - st.turnStartMs;
     if front < k.jarakMundur || macet
         st = mulaiMundur(st, now, k);
-    elseif t >= k.waktuBelok && front > k.jarakBelok
+    elseif t >= k.waktuBelok && front > k.jarakBelok && ...
+            (~v13 || (sKiri < k.navMax && sKanan < k.navMax))   % v13: selesai bila sudah di lorong
         st.state = J; st.turnDir = 0; st.mundurCount = 0;
         st.integral = 0; st.errorSeb = 0;
     elseif t > k.BELOK_MAKS_MS
@@ -91,12 +108,33 @@ elseif k.LIHAT_SEBELUM_BELOK && st.state == LI
             st.turnStartMs = now;
             if st.lihatF >= k.jarakBelok && st.lihatF >= k.jarakPaksa
                 st.state = J; st.turnDir = 0;
+            elseif v13 && ~bukaL && ~bukaR && st.lihatF >= k.CARI_MIN_CM
+                st.state = CA; st.turnDir = 0;          % v13: belum ada celah -> maju pelan mencari
             elseif st.lihatF < k.jarakMundur + k.MUNDUR_DULU_CM
                 st = mulaiMundur(st, now, k);
             else
                 st.state = ifelse(keKiri, BK, BN);
             end
         end
+    end
+elseif v13 && st.state == CA
+    % v13 CARI_CELAH: sisi terbuka = 2 pembacaan mentah berturut-turut > jarakBuka
+    if kiriBuka || kananBuka
+        if kiriBuka && kananBuka, keKiri = st.hL(i1) >= st.hR(i1); else, keKiri = kiriBuka; end
+        st.turnDir = ifelse(keKiri, -1, 1); st.turnStartMs = now;
+        if front < k.jarakMundur + k.MUNDUR_DULU_CM
+            st = mulaiMundur(st, now, k);           % terlalu dekat dinding: mundur LURUS dulu
+            st.mundurLurus = true;                  % agar busur belok penuh muat di area putar
+        else
+            st.state = ifelse(keKiri, BK, BN);
+        end
+    elseif front < k.CARI_MIN_CM || macet
+        % tidak ada celah sampai dekat dinding: pakai urutan belok yang disetel
+        st.turnDir = k.urutanBelok(mod(st.urutanIdx, numel(k.urutanBelok)) + 1);
+        st.urutanIdx = st.urutanIdx + 1;
+        st.turnStartMs = now;
+        st = mulaiMundur(st, now, k);
+        st.mundurLurus = true;
     end
 elseif k.LIHAT_SEBELUM_BELOK && (front < k.jarakMundur || macet || front < k.jarakBelok || front < k.jarakPaksa)
     st.state = LI; st.lihatN = 0; st.faseStart = now;
@@ -130,6 +168,7 @@ elseif st.state == MU
     st.pumpOn = false;
     a = min(k.sudutBelok, maxA);
     arah = ifelse(st.fase == 2, st.turnDir, -st.turnDir);
+    if st.mundurLurus && st.fase < 2, arah = 0; end     % v13: mundur lurus sebelum belok penuh
     st.tgtAngle = clampA(fix(k.steerSign * arah * a), maxA);
     st.motorSpeed = ifelse(st.fase == 1, -k.pwmMundur, 0);
     st.integral = 0; st.errorSeb = 0;
@@ -177,13 +216,13 @@ else  % JELAJAH / MELAMBAT : PID-Fuzzy
         st.tgtAngle = batasRate(0, st.tgtAngle, k.steerRate, maxA);
         st.integral = 0;
     end
-    st.motorSpeed = ifelse(st.state == J, k.KECEPATAN_JELAJAH, k.KECEPATAN_MENDEKATI);
+    st.motorSpeed = ifelse(st.state == J, k.KECEPATAN_JELAJAH, k.KECEPATAN_MENDEKATI);   % CARI = pelan
     tanaman = kiri < k.jarakTanaman || kanan < k.jarakTanaman;
     st.pumpOn = tanaman && ~st.waterLow;
 end
 
 %% 4) Log satu baris (format LOG_HEADER)
-kode = 'JLBKRMS';
+kode = 'JLBKRMSC';
 baris = struct('ms', now, 'run', st.run, 'metode', ifelse(st.useFuzzy, 'F', 'P'), ...
     'status', kode(st.state), 'depan', front, 's_kiri', sKiri, 's_kanan', sKanan, ...
     'kiri', kiri, 'kanan', kanan, 'setpoint', sp, 'e', st.error, 'de', st.deltaError, ...

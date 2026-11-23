@@ -11,6 +11,9 @@ st.fRef = 999; st.tRef = 0;
 st.turnStartMs = 0; st.turnDir = 0; st.fase = 0; st.faseStart = 0; st.mundurCount = 0;
 st.lihatN = 0; st.lihatL = 0; st.lihatR = 0; st.lihatF = 999;
 st.jedaStepper = false;
+st.urutanIdx = 0;        % v13: indeks urutan belok cadangan
+st.mRef = [999 999 999]; % v13: acuan deteksi macet saat manuver
+st.mundurLurus = false;  % v13: mundur dengan kemudi lurus (setelah CARI CELAH)
 st.integral = 0; st.errorSeb = 0; st.error = 0; st.deltaError = 0;
 st.Kp = cfg.k.Kp0; st.Ki = cfg.k.Ki0; st.Kd = cfg.k.Kd0;
 st.P = 0; st.I = 0; st.D = 0; st.u = 0;
