@@ -1605,7 +1605,11 @@ static void autoModeStep(float dt) {
     // v13 CARI CELAH: maju pelan (PID-Fuzzy tetap menjaga tengah lorong) sampai sensor samping
     // melihat celah. Pada lintasan U-turn, celah baru terlihat saat moncong +-30 cm dari dinding
     // ujung, padahal keputusan LIHAT diambil di 100 cm -> dulu arah belok untung-untungan.
-    if (kiriBuka || kananBuka) {
+    if (front > g_jarakBelok) {
+      // depan lapang lagi (mis. kerucut sensor depan tadi mengenai dinding samping saat robot
+      // miring) -> kembali jalan biasa; tanpa ini robot tertahan di CARI_CELAH (pelan) terus
+      g_state = MELAMBAT;
+    } else if (kiriBuka || kananBuka) {
       bool keKiri = (kiriBuka && kananBuka) ? (hL[i1] >= hR[i1]) : kiriBuka;
       g_turnDir = keKiri ? -1 : 1;
       g_turnStartMs = now;

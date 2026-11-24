@@ -121,7 +121,10 @@ elseif k.LIHAT_SEBELUM_BELOK && st.state == LI
     end
 elseif v13 && st.state == CA
     % v13 CARI_CELAH: sisi terbuka = 2 pembacaan mentah berturut-turut > jarakBuka
-    if kiriBuka || kananBuka
+    if front > k.jarakBelok
+        st.state = L;                               % depan lapang lagi (mis. kerucut sensor depan
+                                                    % tadi mengenai dinding samping) -> jalan biasa
+    elseif kiriBuka || kananBuka
         if kiriBuka && kananBuka, keKiri = st.hL(i1) >= st.hR(i1); else, keKiri = kiriBuka; end
         st.turnDir = ifelse(keKiri, -1, 1); st.turnStartMs = now;
         if front < k.jarakMundur + k.MUNDUR_DULU_CM
