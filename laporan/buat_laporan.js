@@ -141,7 +141,7 @@ isi.push(new Paragraph({ children: [new PageBreak()] }));
 isi.push(H1('1. Pendahuluan'));
 isi.push(P('Laporan ini menjelaskan simulasi dan pengujian sistem kendali robot penyiram tanaman otomatis. ' +
   'Robot berjalan di lorong di antara deretan tanaman, menjaga posisinya di tengah lorong dengan PID yang gain-nya ' +
-  'diatur oleh fuzzy Mamdani, berbalik arah (U-turn) di ujung lorong, dan menyalakan pompa saat sensor mendeteksi tanaman.'));
+  'diatur oleh fuzzy Mamdani, berbalik arah (U-turn) di ujung lorong, dan menyiram tanaman selama berjalan lurus di lorong.'));
 isi.push(P('Tujuan simulasi:'));
 isi.push(num('Menguji logika kendali firmware ESP32 (versi 13) pada model robot dan lintasan yang ukurannya diambil dari gambar SolidWorks (robot.dxf dan jalur.dxf).'));
 isi.push(num('Menentukan rentang keluaran Kp, Ki, Kd fuzzy yang sesuai, sebagaimana diminta dosen pembimbing.'));
@@ -165,21 +165,24 @@ isi.push(tabel(['Parameter', 'Nilai', 'Sumber'], [
   ['Letak poros belakang', '10 cm dari ekor robot', 'Asumsi'],
   ['Kecepatan pada PWM 80 / 110 / 140', '20 / 30 / 35 cm/s, respons orde-1 τ = 0,3 s', 'Asumsi'],
   ['Kemudi', 'Stepper DM556, 10 langkah/derajat, 700 µs/langkah, maks. 45°', 'Firmware'],
+  ['Jangkauan siram', 'Tanaman di samping badan robot sampai 60 cm dari garis tengah robot', 'Asumsi'],
 ], [2900, 4372, 1800], { kiri: [1] }));
 
 isi.push(H2('2.2 Sensor'));
-isi.push(P('Robot memakai lima sensor ultrasonik. Jarak dihitung dengan ray-casting dalam kerucut ±15° (jarak ' +
+isi.push(P('Robot memakai lima sensor ultrasonik, dan kelimanya dipakai untuk navigasi: menjaga robot di tengah lorong, ' +
+  'menentukan kapan melambat, berhenti dan berbelok, serta mencegah badan robot menabrak dinding atau bedengan. ' +
+  'Jarak dihitung dengan ray-casting dalam kerucut ±15° (jarak ' +
   'terdekat diambil), batas 400 cm (di luar itu bernilai 999 seperti fungsi getDist() firmware), dan ditambah derau ' +
   'Gaussian σ = 0,5 cm. Sensor dibaca bergiliran seperti firmware: tiap sensor membutuhkan waktu gema (maks. 25 ms) ' +
   'ditambah jeda 35 ms, sehingga satu siklus kendali (Ts) rata-rata ± 0,20–0,22 s.'));
 isi.push(capT('Posisi dan fungsi sensor (diukur dari tengah poros belakang)'));
-isi.push(tabel(['Sensor', 'Posisi (maju, ke kiri)', 'Arah', 'Fungsi'], [
-  ['Depan', '60,0 cm ; 0 cm', '0°', 'Mendeteksi dinding/rintangan, keputusan belok'],
-  ['Samping kiri', '11,0 cm ; 22,5 cm', '+90°', 'Navigasi: jarak ke tepi kiri'],
-  ['Samping kanan', '11,0 cm ; −22,5 cm', '−90°', 'Navigasi: jarak ke tepi kanan'],
-  ['Kiri', '38,5 cm ; 17,5 cm', '+51,4°', 'Mendeteksi tanaman (pompa)'],
-  ['Kanan', '38,5 cm ; −17,5 cm', '−55,5°', 'Mendeteksi tanaman (pompa)'],
-], [1700, 2400, 1100, 3872], { kiri: [3] }));
+isi.push(tabel(['Sensor', 'Posisi (maju, ke kiri)', 'Arah', 'Fungsi navigasi'], [
+  ['Depan', '60,0 cm ; 0 cm', '0°', 'Jarak ke dinding/rintangan di depan: melambat (< 150 cm), berhenti dan memilih arah belok (< 100 cm)'],
+  ['Samping kiri', '11,0 cm ; 22,5 cm', '+90°', 'Jarak ke tepi kiri lorong: input PID-Fuzzy (jaga tengah lorong), mendeteksi celah U-turn'],
+  ['Samping kanan', '11,0 cm ; −22,5 cm', '−90°', 'Jarak ke tepi kanan lorong: input PID-Fuzzy (jaga tengah lorong), mendeteksi celah U-turn'],
+  ['Kiri', '38,5 cm ; 17,5 cm', '+51,4°', 'Pengaman sudut moncong kiri: < 15 cm dianggap hampir menabrak'],
+  ['Kanan', '38,5 cm ; −17,5 cm', '−55,5°', 'Pengaman sudut moncong kanan: < 15 cm dianggap hampir menabrak'],
+], [1500, 2000, 1000, 4572], { kiri: [3] }));
 
 isi.push(H2('2.3 Lintasan'));
 isi.push(P('Lintasan asli dibaca langsung dari jalur.dxf: tiga lorong sejajar sepanjang 381,8 cm dengan lebar ' +
@@ -195,7 +198,10 @@ isi.push(bul('Perubahan error per sampel: Δe = e(k) − e(k−1).'));
 isi.push(bul('Fuzzy Mamdani menghasilkan Kp, Ki, Kd dari (e, Δe) (Bagian 3).'));
 isi.push(bul('PID diskrit: u = Kp·e + Ki·I + Kd·Δe, dengan I = Σ e·Ts dibatasi ±0,5 dan di-reset saat tanda e berganti; u dibatasi ±100.'));
 isi.push(bul('Sudut kemudi: sudut = trunc(sat(−0,08·u ; ±10°)), perubahan maksimum 4° per siklus, dan kemudi lurus bila |e| < 2 cm (zona mati).'));
-isi.push(bul('Pompa menyala bila sensor kiri atau kanan membaca < 40 cm.'));
+isi.push(bul('Pengaman sudut: bila sensor kiri atau kanan membaca < 15 cm, robot dianggap hampir menabrak. ' +
+  'Saat jalan lurus robot berhenti dan melihat (LIHAT); saat belok atau mencari celah robot mundur dulu.'));
+isi.push(bul('Pompa menyala selama robot berjalan lurus (JELAJAH, MELAMBAT, CARI CELAH) dan mati saat belok, mundur, ' +
+  'melihat, atau berhenti. Pompa juga mati bila air habis.'));
 isi.push(P('Mesin keadaan firmware v13 mengatur gerak di ujung lorong:'));
 isi.push(capT('Keadaan (status) robot pada firmware v13'));
 isi.push(tabel(['Kode', 'Keadaan', 'Perilaku'], [
@@ -347,8 +353,14 @@ isi.push(tabel(['Lintasan', 'Metode', 'Durasi (s)', 'Ts rata-rata (s)', 'Tanaman
   fungsi.map((r) => [NAMA[r.skenario] ?? r.skenario, r.metode, fmt(r.durasi_s, 1), fmt(r.Ts_rata_s, 3),
     `${r.disiram}/${r.jml_tanaman}`, fmt(n(r.ms_tertahan) / 1000, 1), r.status_dilalui]),
   [2672, 1100, 900, 1000, 1100, 1000, 1300], { size: 18, kiri: [0] }));
-isi.push(P('Pada lintasan asli, kedua metode menyelesaikan tiga lorong dan dua U-turn dalam ± 49 s tanpa tabrakan, dan ' +
-  '16 dari 20 tanaman tersiram. Pada belokan 90° di lorong 100 cm dan pada lorong buntu, robot sempat tertahan ' +
+const jF = fungsi.find((r) => r.skenario === 'jalur' && r.metode === 'PID-Fuzzy');
+const jP = fungsi.find((r) => r.skenario === 'jalur' && r.metode === 'PID tetap');
+isi.push(P('Tanaman dihitung tersiram bila pompa menyala saat tanaman berada di samping badan robot (jangkauan 60 cm, ' +
+  'asumsi). Karena pompa hanya menyala saat jalan lurus, tanaman yang terlewat umumnya berada di ujung lorong, ' +
+  'tempat robot berhenti, melihat, dan berbelok.'));
+isi.push(P(`Pada lintasan asli, kedua metode menyelesaikan tiga lorong dan dua U-turn tanpa tabrakan (PID-Fuzzy ` +
+  `${fmt(jF.durasi_s, 1)} s, PID tetap ${fmt(jP.durasi_s, 1)} s), dengan ${jF.disiram} dari ${jF.jml_tanaman} tanaman ` +
+  `tersiram. Pada belokan 90° di lorong 100 cm dan pada lorong buntu, robot sempat tertahan ` +
   'dinding (kolom "Tertahan"). Kedua kasus ini adalah batas geometri: robot sepanjang 70 cm dengan radius putar ' +
   '± 50 cm tidak muat berbelok di ruang tersebut. Saat U-turn, metode kendali tidak berpengaruh karena kemudi ' +
   'diatur mesin keadaan, bukan PID.'));
@@ -388,7 +400,8 @@ isi.push(num(`Bila PID tetap disetel dengan prosedur yang sama, kinerjanya setar
 // 8. Keterbatasan & saran
 isi.push(H1('8. Keterbatasan dan Saran'));
 isi.push(bul('Seluruh hasil berasal dari simulasi. Validasi perlu dilakukan dengan log robot asli (/log.csv) memakai skrip bandingkan_log.m.'));
-isi.push(bul('Kecepatan robot pada tiap PWM, letak poros belakang, serta ukuran dan letak tanaman masih berupa asumsi.'));
+isi.push(bul('Kecepatan robot pada tiap PWM, letak poros belakang, ukuran dan letak tanaman, jangkauan siram pompa, ' +
+  'dan batas pengaman sudut 15 cm masih berupa asumsi.'));
 isi.push(bul('Model belum memuat slip roda, kelembaman kemudi, pantulan ultrasonik yang kompleks, dan variasi permukaan tanah.'));
 isi.push(bul('Rule base fuzzy belum disetel; hanya rentang outputnya. Penyetelan rule atau penambahan umpan maju arah (heading) dapat diuji pada simulasi yang sama.'));
 isi.push(bul('Zona mati 2 cm dan pembulatan sudut kemudi dapat diperhalus agar ayunan kecil ±2–3 cm berkurang.'));
