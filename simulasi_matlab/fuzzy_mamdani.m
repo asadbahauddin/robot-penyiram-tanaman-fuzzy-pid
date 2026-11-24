@@ -6,7 +6,7 @@ if nargin < 6, fz = fuzzy_param(); end
 e  = min(max(e,  fz.range_in(1)), fz.range_in(2));
 de = min(max(de, fz.range_in(1)), fz.range_in(2));
 
-nIn = size(fz.MF_IN, 1);  nOut = numel(fz.OUT_CENTER);
+nIn = size(fz.MF_IN, 1);  nOut = numel(fz.CP);
 muE = zeros(1, nIn); muDE = zeros(1, nIn);
 for k = 1:nIn
     muE(k)  = trapmf_fw(e,  fz.MF_IN(k,:));
@@ -23,8 +23,7 @@ for i = 1:nIn            % i = error (baris)
         aggD(fz.RULE_KD(i,j)) = max(aggD(fz.RULE_KD(i,j)), alpha);
     end
 end
-z = fz.OUT_CENTER;
-if sum(aggP) > 1e-4, kp = sum(aggP .* z) / sum(aggP); end
-if sum(aggI) > 1e-4, ki = sum(aggI .* z) / sum(aggI); end
-if sum(aggD) > 1e-4, kd = sum(aggD .* z) / sum(aggD); end
+if sum(aggP) > 1e-4, kp = sum(aggP .* fz.CP) / sum(aggP); end   % COA titik pusat, rentang Kp
+if sum(aggI) > 1e-4, ki = sum(aggI .* fz.CI) / sum(aggI); end   % ... rentang Ki
+if sum(aggD) > 1e-4, kd = sum(aggD .* fz.CD) / sum(aggD); end   % ... rentang Kd
 end

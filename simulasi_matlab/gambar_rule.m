@@ -1,8 +1,9 @@
-function gambar_rule(folder)
+function gambar_rule(folder, cfg)
 %GAMBAR_RULE  Tabel rule base Kp, Ki, Kd (7x7) sebagai PNG berwarna + gabungan fungsi keanggotaan.
 %   Baris = Error, kolom = Delta Error (sesuai tabel dosen). Warna = besar keluaran (ZE..EVB).
 if nargin < 1, folder = ''; end
-fz = fuzzy_param();
+if nargin < 2, cfg = config_robot(); end
+fz = cfg.fz;
 R = {fz.RULE_KP, fz.RULE_KI, fz.RULE_KD};
 nm = {'Kp (Proportional)', 'Ki (Integral)', 'Kd (Derivative)'};
 fn = {'rule_Kp.png', 'rule_Ki.png', 'rule_Kd.png'};
@@ -27,21 +28,25 @@ for k = 1:3
 end
 
 % gabungan MF input & output dalam satu gambar
-f = figure('Color', 'w', 'Position', [100 100 1100 420]);
-tl = tiledlayout(f, 1, 2, 'TileSpacing', 'compact');
-x = linspace(-6, 6, 601); z = linspace(0, 20, 801); w = lines(9);
+f = figure('Color', 'w', 'Position', [100 100 1100 760]);
+tl = tiledlayout(f, 2, 2, 'TileSpacing', 'compact');
+x = linspace(-6, 6, 601); w = lines(9);
 nexttile; hold on;
 for k = 1:7
     plot(x, arrayfun(@(v) trapmf_fw(v, fz.MF_IN(k,:)), x), 'LineWidth', 2, 'Color', w(k,:));
     text(fz.MF_IN(k,2), 1.06, fz.lbl_in{k}, 'HorizontalAlignment', 'center', 'FontWeight', 'bold');
 end
 ylim([0 1.15]); grid on; xlabel('e / \Deltae (cm)'); ylabel('\mu'); title('Input: error dan delta error');
-nexttile; hold on;
-for k = 1:9
-    plot(z, arrayfun(@(v) trapmf_fw(v, fz.MF_OUT(k,:)), z), 'LineWidth', 2, 'Color', w(k,:));
-    text(fz.OUT_CENTER(k), 1.06, fz.lbl_out{k}, 'HorizontalAlignment', 'center', 'FontWeight', 'bold');
+nmO = {'Kp', 'Ki', 'Kd'}; MFo = {fz.MF_OUT, fz.MF_OUT_I, fz.MF_OUT_D}; Co = {fz.CP, fz.CI, fz.CD};
+for j = 1:3
+    nexttile; hold on; c = Co{j}; z = linspace(c(1), c(end), 801);
+    for k = 1:9
+        plot(z, arrayfun(@(v) trapmf_fw(v, MFo{j}(k,:)), z), 'LineWidth', 2, 'Color', w(k,:));
+        text(c(k), 1.06, fz.lbl_out{k}, 'HorizontalAlignment', 'center', 'FontWeight', 'bold', 'FontSize', 8);
+    end
+    ylim([0 1.15]); xlim([c(1) c(end)]); grid on; xlabel(nmO{j});
+    title(sprintf('Output: %s (rentang %g-%g)', nmO{j}, c(1), c(end)));
 end
-ylim([0 1.15]); grid on; xlabel('Kp / Ki / Kd'); title('Output: Kp, Ki, Kd (rentang 0-20)');
 title(tl, 'Fungsi keanggotaan fuzzy Mamdani');
 if ~isempty(folder), exportgraphics(f, fullfile(folder, 'mf_gabungan.png'), 'Resolution', 150); end
 end

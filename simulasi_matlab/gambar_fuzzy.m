@@ -1,8 +1,9 @@
-function gambar_fuzzy(folder)
+function gambar_fuzzy(folder, cfg)
 %GAMBAR_FUZZY  Fungsi keanggotaan e, de, Kp/Ki/Kd dan permukaan Kp/Ki/Kd(e, de) untuk Bab 3/4.
 %   Permukaan dihitung dengan fuzzy_mamdani() (identik firmware v12), bukan toolbox.
 if nargin < 1, folder = ''; end
-fz = fuzzy_param();
+if nargin < 2, cfg = config_robot(); end
+fz = cfg.fz;
 warna = lines(9);
 
 % --- MF input (e dan de sama)
@@ -20,18 +21,19 @@ for nmIn = {'e', 'de'}
     simpan(f, folder, ['mf_' nmIn{1} '.png']);
 end
 
-% --- MF output
-z = linspace(0, 20, 801);
-for nmOut = {'Kp', 'Ki', 'Kd'}
+% --- MF output (rentang tiap gain sendiri-sendiri)
+nmO = {'Kp', 'Ki', 'Kd'}; MFo = {fz.MF_OUT, fz.MF_OUT_I, fz.MF_OUT_D}; Co = {fz.CP, fz.CI, fz.CD};
+for j = 1:3
+    c = Co{j}; z = linspace(c(1), c(end), 801);
     f = figure('Color', 'w', 'Position', [100 100 760 360]); hold on;
     for k = 1:9
-        mu = arrayfun(@(v) trapmf_fw(v, fz.MF_OUT(k,:)), z);
+        mu = arrayfun(@(v) trapmf_fw(v, MFo{j}(k,:)), z);
         plot(z, mu, 'LineWidth', 2, 'Color', warna(k,:));
-        text(fz.OUT_CENTER(k), 1.06, fz.lbl_out{k}, 'HorizontalAlignment', 'center', 'FontWeight', 'bold');
+        text(c(k), 1.06, fz.lbl_out{k}, 'HorizontalAlignment', 'center', 'FontWeight', 'bold');
     end
-    ylim([0 1.15]); xlim([0 20]); grid on; ylabel('\mu'); xlabel(nmOut{1});
-    title(['Fungsi keanggotaan keluaran ' nmOut{1} ' (rentang 0-20)']);
-    simpan(f, folder, ['mf_' nmOut{1} '.png']);
+    ylim([0 1.15]); xlim([c(1) c(end)]); grid on; ylabel('\mu'); xlabel(nmO{j});
+    title(sprintf('Fungsi keanggotaan keluaran %s (rentang %g-%g)', nmO{j}, c(1), c(end)));
+    simpan(f, folder, ['mf_' nmO{j} '.png']);
 end
 
 % --- permukaan
@@ -44,7 +46,7 @@ Z = {KP, KI, KD}; nm = {'Kp', 'Ki', 'Kd'};
 for j = 1:3
     f = figure('Color', 'w', 'Position', [100 100 700 520]);
     surf(E, DE, Z{j}, 'EdgeAlpha', 0.3); colormap(f, parula); colorbar;
-    xlabel('e (cm)'); ylabel('\Deltae (cm)'); zlabel(nm{j}); zlim([0 20]);
+    xlabel('e (cm)'); ylabel('\Deltae (cm)'); zlabel(nm{j}); zlim(Co{j}([1 end]));
     title(['Permukaan fuzzy ' nm{j} '(e, \Deltae)']); view(-35, 30);
     simpan(f, folder, ['surface_' nm{j} '.png']);
 end

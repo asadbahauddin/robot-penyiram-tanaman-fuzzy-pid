@@ -1,5 +1,5 @@
 % UJI_FUZZY  Bandingkan fuzzy_mamdani() dengan hitungan tangan dari tabel rule dosen.
-fz = fuzzy_param();
+fz = fuzzy_param([0 20], [0 20], [0 20]);   % uji tabel rule dengan rentang asli dosen
 % kolom: e, de, Kp, Ki, Kd (harapan, dihitung tangan)
 %  (0,0)  : hanya aturan Z-Z aktif (mu=1)            -> Kp ZE=0,   Ki EVB=20, Kd ZE=0
 %  (1,0)  : Z 0,5 & PS 0,5 ; de Z=1                  -> Kp (0+7,5)/2=3,75  Ki (20+12,5)/2=16,25  Kd 3,75
