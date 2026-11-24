@@ -41,7 +41,8 @@
  *         sampai sensor samping melihat celah, lalu MUNDUR LURUS (g_waktuMundurCari) dan belok penuh;
  *       - deteksi macet saat manuver: depan & kedua samping tidak berubah 1,5 s (berapa pun jaraknya);
  *       - belok selesai bila depan lapang DAN salah satu samping melihat dinding; kemudi langsung lurus;
- *       - sudut belok bawaan 45 derajat. Fuzzy-PID identik v12.
+ *       - sudut belok bawaan 45 derajat;
+ *       - rentang keluaran fuzzy Kd diperlebar ke 0-300 (Kp, Ki tetap 0-20; 9 label & rule dosen tetap).
  *  v12: fuzzy Mamdani diganti sesuai parameter dosen: input e & delta e 7 segitiga
  *       (NB, NM, NS, Z, PS, PM, PB) pada [-6, 6]; output Kp, Ki, Kd 9 segitiga
  *       (ZE, VS, S, MS, M, MB, B, VB, EVB) pada [0, 20]; rule base 7x7 (baris = error,
@@ -419,6 +420,13 @@ static const float OUT_CENTER[N_OUT] = {
   15.0f,  // B   (12.5, 15, 17.5)
   17.5f,  // VB  (15, 17.5, 20)
   20.0f   // EVB (17.5, 20, 20)
+};
+// --- v13: rentang keluaran Kd diperlebar ke [0, 300] (9 label sama, jarak 37,5), Kp & Ki tetap [0, 20].
+//     Dosen mempersilakan rentang diperbaiki. Hasil simulasi (tuning_rentang.m): dengan Kd 0-20 suku D
+//     terlalu lemah karena delta e per sampel hanya +-0,5 cm -> robot berayun terus di lorong
+//     (settling 56 s). Kd 0-300: settling +-3 s, IAE turun +-60 %.
+static const float OUT_CENTER_KD[N_OUT] = {
+  0.0f, 37.5f, 75.0f, 112.5f, 150.0f, 187.5f, 225.0f, 262.5f, 300.0f   // ZE .. EVB
 };
 // --- v12 (parameter dosen): rule base 7x7. Baris = ERROR (NB..PB), kolom = DELTA ERROR (NB..PB)
 static const uint8_t RULE_KP[N_IN][N_IN] = {
@@ -1218,7 +1226,7 @@ static void fuzzyTuning(float e, float de, float &kp, float &ki, float &kd) {
   for (int k = 0; k < N_OUT; k++) {
     nP += aggKp[k] * OUT_CENTER[k];  dP += aggKp[k];
     nI += aggKi[k] * OUT_CENTER[k];  dI += aggKi[k];
-    nD += aggKd[k] * OUT_CENTER[k];  dD += aggKd[k];
+    nD += aggKd[k] * OUT_CENTER_KD[k];  dD += aggKd[k];   // v13: rentang Kd 0-300
   }
   if (dP > 0.0001f) kp = nP / dP;   // jika tidak ada aturan aktif, nilai lama dipertahankan
   if (dI > 0.0001f) ki = nI / dI;

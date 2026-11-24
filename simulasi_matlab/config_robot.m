@@ -77,7 +77,10 @@ k.sudutBelok = 45;                  % v13: belok penuh 45 derajat (U-turn muat d
 cfg.k = k;
 
 %% ---------------- Fuzzy Mamdani (parameter dosen, sama dengan firmware v12) ----------------
-cfg.fz = fuzzy_param();
+% Rentang output (9 kategori, rule dosen). Kp & Ki tetap 0-20 sesuai dosen; Kd diperlebar ke 0-300
+% hasil tuning_rentang.m: Kd 0-20 terlalu lemah karena delta e per sampel kecil (+-0,5 cm),
+% robot berayun terus (settling 56 s). Rentang asli dosen: fuzzy_param([0 20], [0 20], [0 20]).
+cfg.fz = fuzzy_param([0 20], [0 20], [0 300]);
 
 %% ---------------- Simulasi ----------------
 cfg.dt_ms   = 1;      % langkah fisika 1 ms
