@@ -1,0 +1,9 @@
+Metrik,PID_Fuzzy,PID_tetap
+Simpangan puncak (cm),4.129,3.588
+Overshoot (cm),2.828,2.34
+Overshoot (%),NaN,NaN
+Settling time +/-5 cm (s),0,0
+Steady-state error (cm),0.873,0.712
+IAE (cm.s),60.646,51.418
+ISE (cm^2.s),136.341,100.258
+RMSE (cm),1.889,1.624
