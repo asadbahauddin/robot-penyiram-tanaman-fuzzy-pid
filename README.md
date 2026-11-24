@@ -9,10 +9,37 @@ tengah lorong dengan PID yang gain-nya diatur fuzzy Mamdani, lalu menyalakan pom
 kiri atau kanan mendeteksi tanaman.
 
 ```
-firmware/program_robot_final_v12/   firmware ESP32 (fuzzy sesuai parameter dosen)
+firmware/program_robot_final_v12/   firmware ESP32: fuzzy sesuai parameter dosen
+firmware/program_robot_final_v13/   v12 + perbaikan U-turn (diuji di simulasi) <- pakai ini
 simulasi_matlab/                     simulasi MATLAB (R2024a, tanpa toolbox)
-  hasil/                             gambar PNG, animasi GIF, log CSV, tabel metrik
+  dxf/                               robot.dxf & jalur.dxf dari SolidWorks (satuan cm)
+  hasil/                             gambar PNG, animasi GIF, video MP4, log & data CSV, metrik
 ```
+
+Video robot dari start sampai finish di lintasan asli ada di
+`simulasi_matlab/hasil/video_jalur_fuzzy.mp4` (PID-Fuzzy) dan `video_jalur_pid.mp4` (PID tetap).
+
+## Firmware v13 (perbaikan U-turn)
+
+Di simulasi, firmware v12 gagal U-turn di lintasan `jalur.dxf`. Ada dua penyebab:
+
+- Celah U-turn baru terlihat oleh sensor samping saat moncong robot sekitar 30 cm dari dinding ujung.
+  Padahal arah belok sudah diputuskan di jarak 100 cm.
+- Deteksi macet hanya aktif bila sensor depan membaca < 30 cm, sehingga robot bisa terus mendorong dinding.
+
+Perubahan di v13 (Fuzzy-PID identik dengan v12):
+
+1. Keadaan baru `CARI_CELAH` (status `C` di log). Bila saat LIHAT tidak ada sisi yang terbuka,
+   robot maju pelan sampai celah terlihat. Setelah itu robot mundur lurus sekitar 300 ms lalu
+   berbelok penuh 45°.
+2. Saat manuver, robot dianggap macet bila jarak depan dan kedua sisi tidak berubah selama 1,5 s,
+   berapa pun jaraknya.
+3. Belokan dianggap selesai bila depan sudah lapang dan salah satu sisi melihat dinding. Kemudi
+   langsung diluruskan.
+4. Sudut belok bawaan 45°. Kalau setelan lama (40°) tersimpan di flash, ubah "Sudut belok" di
+   halaman web menjadi 45 lalu tekan Simpan.
+
+Kedua versi sudah di-compile untuk ESP32 (core esp32 2.0.17).
 
 ## Fuzzy Mamdani (sama di firmware v12 dan simulasi)
 
@@ -52,6 +79,8 @@ Skrip `main.m` menjalankan langkah berikut:
    - `belokan`: belok kanan 90°, lorong 150 cm setelah belokan.
    - `belokan_sempit`: sama, lorong 100 cm setelah belokan.
    - `rintangan`: lorong buntu karena rintangan di depan.
+   - `jalur`: lintasan asli dari `dxf/jalur.dxf` (3 lorong, 2 U-turn, sekat 5 cm). Badan robot
+     dan posisi kelima sensor diambil dari `dxf/robot.dxf`.
 4. **Grafik, animasi, dan log**: grafik respons, gambar lintasan, animasi GIF, dan log CSV berformat sama dengan robot.
 5. **Perbandingan PID-Fuzzy vs PID tetap**: grafik dan tabel metrik (overshoot, settling time, steady-state error, IAE, ISE, RMSE).
 
