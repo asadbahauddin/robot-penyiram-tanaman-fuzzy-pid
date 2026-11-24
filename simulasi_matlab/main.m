@@ -10,7 +10,9 @@ folder = fullfile(here, 'hasil'); if ~exist(folder, 'dir'), mkdir(folder); end
 
 %% ================= PILIHAN =================
 skenario = {'lurus', 'tidak_di_tengah', 'miring', 'belokan', 'belokan_sempit', 'rintangan', 'jalur'};
-bandingkan = {'tidak_di_tengah', 'miring'};   % skenario untuk perbandingan PID-Fuzzy vs PID tetap
+jalankan_perbandingan = true; % perbandingan PID-Fuzzy vs PID tetap (hasil/perbandingan/)
+n_benih = 5;                  % jumlah benih derau sensor tiap skenario perbandingan
+jalankan_tuning = false;      % true: ulangi pencarian rentang fuzzy & gain PID tetap (lama)
 buat_animasi = true;          % simpan GIF animasi (metode PID-Fuzzy)
 anomali_dm556 = false;        % true: tambahkan pembacaan semu ~50 cm (gangguan driver DM556)
 %% ==========================================
@@ -54,9 +56,13 @@ end
 fprintf('\n== Ringkasan skenario ==\n'); disp(ringkas);
 writetable(ringkas, fullfile(folder, 'ringkasan_skenario.csv'));
 
-for s = bandingkan
-    [tab, ~] = plot_perbandingan(hasil.(s{1}).fuzzy, hasil.(s{1}).pid, folder);
-    fprintf('\n== Metrik: %s ==\n', s{1}); disp(tab);
+if jalankan_tuning                     % lama (+-20 menit): cari rentang fuzzy & gain PID tetap
+    tuning_rentang(folder);
+    tuning_pid_tetap(folder);
+end
+if jalankan_perbandingan
+    fprintf('\n== Perbandingan PID-Fuzzy vs PID tetap (%d benih) ==\n', n_benih);
+    perbandingan_metode(folder, n_benih);
     if modeBatch, close all; end
 end
 save(fullfile(folder, 'hasil_simulasi.mat'), 'hasil', 'ringkas', '-v7.3');
