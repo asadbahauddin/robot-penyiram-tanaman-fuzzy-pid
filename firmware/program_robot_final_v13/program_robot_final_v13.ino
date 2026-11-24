@@ -42,7 +42,9 @@
  *       - deteksi macet saat manuver: depan & kedua samping tidak berubah 1,5 s (berapa pun jaraknya);
  *       - belok selesai bila depan lapang DAN salah satu samping melihat dinding; kemudi langsung lurus;
  *       - sudut belok bawaan 45 derajat;
- *       - rentang keluaran fuzzy Kd diperlebar ke 0-300 (Kp, Ki tetap 0-20; 9 label & rule dosen tetap).
+ *       - rentang keluaran fuzzy Kd diperlebar ke 0-300 (Kp, Ki tetap 0-20; 9 label & rule dosen tetap);
+ *       - kelima sensor untuk navigasi: sensor kiri/kanan (sudut moncong) menjadi pengaman sudut
+ *         depan (< 15 cm -> dianggap macet). Pompa menyala selama jalan lurus, mati saat belok.
  *  v12: fuzzy Mamdani diganti sesuai parameter dosen: input e & delta e 7 segitiga
  *       (NB, NM, NS, Z, PS, PM, PB) pada [-6, 6]; output Kp, Ki, Kd 9 segitiga
  *       (ZE, VS, S, MS, M, MB, B, VB, EVB) pada [0, 20]; rule base 7x7 (baris = error,
@@ -308,6 +310,7 @@ enum RobotState { JELAJAH, MELAMBAT, BERHENTI, BELOK_KIRI, BELOK_KANAN, MUNDUR, 
 #define CARI_MIN_CM  20                // CARI_CELAH: maju paling dekat sejauh ini dari dinding depan
 static const int8_t URUTAN_BELOK[] = { -1, 1 };   // cadangan bila celah tak terlihat: -1 kiri, +1 kanan
 #define N_URUTAN_BELOK (sizeof(URUTAN_BELOK) / sizeof(URUTAN_BELOK[0]))
+static float   g_jarakSudut  = 15.0f;  // v13: cm, sensor kiri/kanan (sudut moncong) < ini -> hampir menabrak
 static uint8_t g_urutanIdx   = 0;
 static bool    g_mundurLurus = false;  // v13: mundur dengan kemudi lurus (setelah CARI_CELAH)
 static int     g_waktuMundurCari = 300; // ms mundur lurus sebelum belok penuh (+-10-15 cm)
@@ -1456,7 +1459,7 @@ static void autoModeStep(float dt) {
     sKiri  = saring(sKiri,  fL, nL);
     sKanan = saring(sKanan, fR, nR);
   }
-  float kiri   = getDist(IDX_LEFT);              // deteksi tanaman
+  float kiri   = getDist(IDX_LEFT);              // v13: pengaman sudut moncong kiri (navigasi)
   float kanan  = getDist(IDX_RIGHT);
   float front  = getDist(IDX_FRONT);
   // median 3 sampel: buang lonjakan sesaat sensor depan
@@ -1517,6 +1520,14 @@ static void autoModeStep(float dt) {
       if (!maju || front >= g_jarakBelok || fabsf(front - fRef) > 3.0f) { fRef = front; tRef = now; }
       else if (now - tRef > 1500UL) { macet = true; fRef = 999.0f; tRef = now; }
     }
+  }
+  // v13: kelima sensor dipakai navigasi. Sensor KIRI/KANAN (miring di sudut moncong) menjadi
+  // pengaman sudut depan: bila salah satu < g_jarakSudut, sudut robot hampir menabrak dinding/
+  // bedengan -> diperlakukan seperti macet (LIHAT saat jalan lurus, MUNDUR saat belok/cari celah).
+  if ((kiri < g_jarakSudut || kanan < g_jarakSudut) &&
+      (g_state == JELAJAH || g_state == MELAMBAT || g_state == BELOK_KIRI ||
+       g_state == BELOK_KANAN || g_state == CARI_CELAH)) {
+    macet = true;
   }
 
   // ---- 1) Tentukan keadaan ----
@@ -1759,9 +1770,9 @@ static void autoModeStep(float dt) {
 
     setAutoSpeed((g_state == JELAJAH) ? KECEPATAN_JELAJAH : KECEPATAN_MENDEKATI);
 
-    // ---- 3) Penyiraman: sensor KIRI/KANAN mendeteksi tanaman ----
-    bool tanaman = (kiri < g_jarakTanaman) || (kanan < g_jarakTanaman);
-    if (tanaman && !g_waterLow) pompaOn(); else pompaOff();
+    // ---- 3) Penyiraman (v13): pompa menyala selama robot berjalan lurus (JELAJAH, MELAMBAT,
+    //      CARI_CELAH) dan mati saat belok, mundur, melihat atau berhenti. Air habis -> mati.
+    if (!g_waterLow) pompaOn(); else pompaOff();
   }
 
 #if LOG_CSV
