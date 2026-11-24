@@ -10,7 +10,12 @@ rng(cfg.seed);
 if isfield(world, 'T_maks'), Tmaks = world.T_maks; else, Tmaks = cfg.T_maks; end
 sc = cfg.sensor; k = cfg.k; spd = cfg.steer.stepsPerDeg;
 namaS = cfg.sensor.urutan;                 % {'s_kanan','kanan','s_kiri','kiri','depan'}
-tanamanS = struct('s_kanan', false, 'kanan', true, 's_kiri', false, 'kiri', true, 'depan', false);
+v13 = isfield(cfg.k, 'versi') && cfg.k.versi >= 13;
+if v13   % v13: kelima sensor = sensor jarak navigasi (melihat dinding/bedengan & rintangan)
+    tanamanS = struct('s_kanan', false, 'kanan', false, 's_kiri', false, 'kiri', false, 'depan', false);
+else     % v12: sensor kiri/kanan hanya melihat tanaman (pemicu pompa)
+    tanamanS = struct('s_kanan', false, 'kanan', true, 's_kiri', false, 'kiri', true, 'depan', false);
+end
 arahKemudi = 1; if ~cfg.steer.kiri_positif, arahKemudi = -1; end
 
 st = kendali_init(cfg, useFuzzy);
@@ -71,7 +76,14 @@ for t = 0:cfg.dt_ms:nMax
     end
 
     %% ---------- penyiraman ----------
-    if st.pumpOn
+    if st.pumpOn && v13 && nT > 0
+        % v13: pompa menyala saat jalan lurus; tanaman tersiram bila berada di samping robot
+        % (sepanjang badan, sampai cfg.k.jangkauSiram cm dari garis tengah robot)
+        dx = world.tanaman(:,1) - pose(1); dy = world.tanaman(:,2) - pose(2);
+        lx = cos(pose(3))*dx + sin(pose(3))*dy; ly = -sin(pose(3))*dx + cos(pose(3))*dy;
+        kena = lx > -cfg.overhang_b & lx < cfg.panjang - cfg.overhang_b & abs(ly) < k.jangkauSiram & isnan(tSiram);
+        tSiram(kena) = t/1000;
+    elseif st.pumpOn
         for nm = {'kiri', 'kanan'}
             i = idxT.(nm{1});
             if i > 0 && g.(nm{1}) < k.jarakTanaman && isnan(tSiram(i)), tSiram(i) = t/1000; end

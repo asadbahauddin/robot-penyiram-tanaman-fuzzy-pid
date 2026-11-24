@@ -57,6 +57,13 @@ else
     st.mRef = [999 999 999];
 end
 
+% v13: sensor kiri/kanan (miring di sudut depan) = pengaman sudut moncong. Bila salah satu
+% < jarakSudut, sudut robot hampir menabrak -> diperlakukan seperti macet (LIHAT saat lurus,
+% MUNDUR saat belok / cari celah).
+if v13 && (kiri < k.jarakSudut || kanan < k.jarakSudut) && any(st.state == [J L BK BN CA])
+    macet = true;
+end
+
 %% 1) Tentukan keadaan
 tgtSteps = st.tgtAngle * spd;
 kemudiSampai = abs(tgtSteps - curSteps) <= 3 * spd;
@@ -222,8 +229,12 @@ else  % JELAJAH / MELAMBAT : PID-Fuzzy
         st.integral = 0;
     end
     st.motorSpeed = ifelse(st.state == J, k.KECEPATAN_JELAJAH, k.KECEPATAN_MENDEKATI);   % CARI = pelan
-    tanaman = kiri < k.jarakTanaman || kanan < k.jarakTanaman;
-    st.pumpOn = tanaman && ~st.waterLow;
+    if v13
+        st.pumpOn = ~st.waterLow;          % v13: pompa menyala selama jalan lurus (J, L, C)
+    else
+        tanaman = kiri < k.jarakTanaman || kanan < k.jarakTanaman;
+        st.pumpOn = tanaman && ~st.waterLow;
+    end
 end
 
 %% 4) Log satu baris (format LOG_HEADER)

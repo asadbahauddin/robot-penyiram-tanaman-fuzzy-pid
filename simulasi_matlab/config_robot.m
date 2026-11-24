@@ -71,6 +71,8 @@ k.Kp0 = 0; k.Ki0 = 20; k.Kd0 = 0;   % nilai awal = fuzzy(0,0) v12
 k.versi       = 13;
 k.CARI_MIN_CM = 20;                 % CARI_CELAH: batas maju mencari celah (cm dari dinding depan)
 k.waktuMundurCari = 300;            % ms mundur lurus setelah celah terlihat
+k.jarakSudut  = 15;                 % cm: sensor kiri/kanan (sudut moncong) < ini -> hampir menabrak
+k.jangkauSiram = 60;                % cm: tanaman di samping robot sejauh ini ikut tersiram [ASUMSI]
 k.urutanBelok = [-1 1];             % cadangan bila tak ada celah terlihat: -1 kiri, +1 kanan
                                     % (lintasan jalur: U-turn 1 ke kiri, U-turn 2 ke kanan)
 k.sudutBelok = 45;                  % v13: belok penuh 45 derajat (U-turn muat di celah 99 cm)
