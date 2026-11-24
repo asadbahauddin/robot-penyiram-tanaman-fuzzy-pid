@@ -77,8 +77,10 @@ elseif st.state == BK || st.state == BN
     if front < k.jarakMundur || macet
         st = mulaiMundur(st, now, k);
     elseif t >= k.waktuBelok && front > k.jarakBelok && ...
-            (~v13 || (sKiri < k.navMax && sKanan < k.navMax))   % v13: selesai bila sudah di lorong
-        st.state = J; st.turnDir = 0; st.mundurCount = 0;
+            (~v13 || sKiri < k.navMax || sKanan < k.navMax)     % v13: selesai bila sudah di lorong
+        st.state = J;
+        if v13, st.tgtAngle = 0; end   % v13: kemudi langsung lurus (tanpa batas laju 4 deg/siklus)
+                                       %      agar robot tidak terus berputar melewati arah lorong st.turnDir = 0; st.mundurCount = 0;
         st.integral = 0; st.errorSeb = 0;
     elseif t > k.BELOK_MAKS_MS
         st.state = B;

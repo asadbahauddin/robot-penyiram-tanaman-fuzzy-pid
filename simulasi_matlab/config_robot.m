@@ -70,9 +70,10 @@ k.Kp0 = 0; k.Ki0 = 20; k.Kd0 = 0;   % nilai awal = fuzzy(0,0) v12
 % ---- v13: perbaikan logika belok (12 = identik firmware v12) ----
 k.versi       = 13;
 k.CARI_MIN_CM = 20;                 % CARI_CELAH: batas maju mencari celah (cm dari dinding depan)
-k.waktuMundurCari = 600;            % ms mundur lurus setelah celah terlihat (~15 cm pada PWM mundur)
-k.urutanBelok = [-1 -1 1 1];        % cadangan bila tak ada celah terlihat: -1 kiri, +1 kanan
-                                    % (lintasan jalur: U-turn 1 = 2x kiri, U-turn 2 = 2x kanan)
+k.waktuMundurCari = 300;            % ms mundur lurus setelah celah terlihat
+k.urutanBelok = [-1 1];             % cadangan bila tak ada celah terlihat: -1 kiri, +1 kanan
+                                    % (lintasan jalur: U-turn 1 ke kiri, U-turn 2 ke kanan)
+k.sudutBelok = 45;                  % v13: belok penuh 45 derajat (U-turn muat di celah 99 cm)
 cfg.k = k;
 
 %% ---------------- Fuzzy Mamdani (parameter dosen, sama dengan firmware v12) ----------------
