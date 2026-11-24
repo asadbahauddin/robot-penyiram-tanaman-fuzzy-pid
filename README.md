@@ -5,8 +5,9 @@ Repo ini berisi firmware ESP32 dan simulasi MATLAB untuk penelitian
 
 Robot berkemudi Ackermann. Kemudinya digerakkan stepper DM556 dan roda belakang oleh motor DC
 lewat driver BTS7960. Robot berjalan di lorong antara dua deret tanaman, menjaga posisinya di
-tengah lorong dengan PID yang gain-nya diatur fuzzy Mamdani, lalu menyalakan pompa saat sensor
-kiri atau kanan mendeteksi tanaman.
+tengah lorong dengan PID yang gain-nya diatur fuzzy Mamdani, dan menyiram selama berjalan lurus.
+Kelima sensor ultrasonik (depan, samping kiri, samping kanan, kiri, kanan) dipakai untuk navigasi.
+Sensor kiri/kanan yang miring di sudut moncong menjadi pengaman agar sudut robot tidak menabrak.
 
 ```
 firmware/program_robot_final_v12/   firmware ESP32: fuzzy sesuai parameter dosen
@@ -96,7 +97,8 @@ Semua parameter (dimensi robot, posisi sensor, kecepatan, ambang jarak, gain) ad
   - penahanan sensor depan saat tak terbaca dan deteksi macet;
   - keadaan JELAJAH, MELAMBAT, BERHENTI, BELOK, MUNDUR (3 fase), dan LIHAT;
   - pemetaan u ke sudut kemudi dengan pembatas laju 4°/siklus;
-  - pompa menyala bila kiri atau kanan < 40 cm.
+  - v13: pompa menyala selama jalan lurus dan mati saat belok; sensor kiri/kanan < 15 cm
+    dianggap hampir menabrak (v12: pompa menyala bila kiri atau kanan < 40 cm).
 - `simulasi.m` meniru pewaktuan `sensorTaskFn()`. Lima sensor dibaca berurutan, masing-masing dengan waktu gema (timeout 25 ms) ditambah jeda 35 ms. Kendali dihitung sekali per siklus (Ts ≈ 0,21 s). Stepper bergerak 1 langkah per 700 µs.
 - `sensor_ultrasonik.m` memakai ray-casting kerucut ±15°. Jarak di atas 400 cm bernilai 999. Ada derau Gaussian dan opsi `anomali_dm556` untuk meniru pembacaan semu sekitar 50 cm dari driver stepper.
 
