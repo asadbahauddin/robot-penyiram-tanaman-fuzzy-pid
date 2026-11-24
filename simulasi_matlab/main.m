@@ -10,9 +10,10 @@ folder = fullfile(here, 'hasil'); if ~exist(folder, 'dir'), mkdir(folder); end
 
 %% ================= PILIHAN =================
 skenario = {'lurus', 'tidak_di_tengah', 'miring', 'belokan', 'belokan_sempit', 'rintangan', 'jalur'};
-jalankan_perbandingan = true; % perbandingan PID-Fuzzy vs PID tetap (hasil/perbandingan/)
-n_benih = 5;                  % jumlah benih derau sensor tiap skenario perbandingan
-jalankan_tuning = false;      % true: ulangi pencarian rentang fuzzy & gain PID tetap (lama)
+% (pilihan di bawah bisa ditimpa dengan mendefinisikan variabelnya sebelum menjalankan main)
+if ~exist('jalankan_perbandingan', 'var'), jalankan_perbandingan = true; end  % hasil/perbandingan/
+if ~exist('n_benih', 'var'), n_benih = 5; end              % benih derau tiap skenario perbandingan
+if ~exist('jalankan_tuning', 'var'), jalankan_tuning = false; end  % ulangi tuning (lama, +-20 menit)
 buat_animasi = true;          % simpan GIF animasi (metode PID-Fuzzy)
 anomali_dm556 = false;        % true: tambahkan pembacaan semu ~50 cm (gangguan driver DM556)
 %% ==========================================
