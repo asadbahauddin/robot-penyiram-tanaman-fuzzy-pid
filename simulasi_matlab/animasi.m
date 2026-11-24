@@ -2,6 +2,7 @@ function animasi(H, file_gif, tampil, langkah)
 %ANIMASI  Animasi robot di lorong: badan, roda kemudi, sinar 5 sensor, tanaman menyala saat disiram.
 %   animasi(H)                       : tampilkan di layar
 %   animasi(H, 'hasil/x.gif')        : tampilkan & simpan GIF
+%   animasi(H, 'hasil/x.mp4', false, 1) : simpan video MP4 (langkah 1 = kecepatan asli)
 %   animasi(H, file, false)          : hanya simpan GIF (mode -batch)
 %   langkah : ambil tiap n frame (1 frame = 0,1 s). Bawaan 3.
 if nargin < 2, file_gif = ''; end
@@ -32,7 +33,12 @@ for j = 1:nS
 end
 hAir = plot(ax, NaN, NaN, 'o', 'MarkerFaceColor', [0.2 0.5 1], 'MarkerEdgeColor', 'none', 'MarkerSize', 9);
 namaStatus = {'JELAJAH', 'MELAMBAT', 'BERHENTI', 'BELOK KIRI', 'BELOK KANAN', 'MUNDUR', 'LIHAT', 'CARI CELAH'};
-pertama = true;
+pertama = true; vw = []; ukuran = [];
+if endsWith(lower(file_gif), '.mp4')            % video MP4 kecepatan asli (10 frame/s simulasi)
+    vw = VideoWriter(file_gif, 'MPEG-4');
+    vw.FrameRate = 10 / langkah; vw.Quality = 90;
+    open(vw);
+end
 for n = 1:langkah:numel(FR)
     F = FR(n); p = F.pose;
     P = robot_badan(p, cfg);
@@ -62,7 +68,12 @@ for n = 1:langkah:numel(FR)
     title(ax, sprintf('%s | %s | t = %.1f s | %s | kemudi %+.0f\\circ | pompa %s', ...
         strrep(W.nama, '_', ' '), H.metode, F.t, namaStatus{F.status}, rad2deg(F.delta), pompa));
     drawnow limitrate;
-    if ~isempty(file_gif)
+    if ~isempty(vw)
+        img = print(f, '-RGBImage', '-r100');
+        if isempty(ukuran), ukuran = floor(size(img, [1 2]) / 2) * 2; end   % MP4 butuh ukuran genap & tetap
+        img = imresize(img, ukuran);
+        writeVideo(vw, img);
+    elseif ~isempty(file_gif)
         img = print(f, '-RGBImage', '-r70');
         [A, map] = rgb2ind(img, 64, 'nodither');
         if pertama
@@ -73,6 +84,7 @@ for n = 1:langkah:numel(FR)
         end
     end
 end
+if ~isempty(vw), close(vw); end
 if ~tampil, close(f); end
 end
 

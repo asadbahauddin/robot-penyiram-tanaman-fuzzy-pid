@@ -38,6 +38,9 @@ for s = skenario
         if buat_animasi && useFuzzy
             animasi(H, fullfile(folder, sprintf('animasi_%s.gif', W.nama)), ~modeBatch);
         end
+        if buat_animasi && strcmp(W.nama, 'jalur')      % video start -> finish, kecepatan asli
+            animasi(H, fullfile(folder, sprintf('video_%s_%s.mp4', W.nama, km)), false, 1);
+        end
         L = H.log; st = [L.status{:}];
         ringkas = [ringkas; table(string(W.nama), string(H.metode), H.traj.t(end), ...
             mean(diff(L.ms))/1000, sum(~isnan(H.tSiram)), numel(H.tSiram), H.nTabrak, ...
