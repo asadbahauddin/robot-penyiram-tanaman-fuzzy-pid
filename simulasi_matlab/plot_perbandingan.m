@@ -9,11 +9,12 @@ tab = table(nm', round(vF, 3), round(vP, 3), 'VariableNames', {'Metrik', 'PID_Fu
 
 f = figure('Name', 'Perbandingan', 'Color', 'w', 'Position', [40 40 1200 820]);
 tl = tiledlayout(f, 3, 2, 'TileSpacing', 'compact', 'Padding', 'compact');
-title(tl, sprintf('PID-Fuzzy vs PID tetap (Kp=Ki=Kd=%.2f) - %s', HF.cfg.k.kpTetap, strrep(HF.world.judul, '_', ' ')));
+nmP = sprintf('PID tetap (Kp=%g, Ki=%g, Kd=%g)', HP.cfg.k.kpTetap, HP.cfg.k.kiTetap, HP.cfg.k.kdTetap);
+title(tl, sprintf('%s vs %s - %s', HF.metode, nmP, strrep(HF.world.judul, '_', ' ')));
 [tF, yF] = lateral(HF); [tP, yP] = lateral(HP);
 nexttile([1 2]); plot(tF, yF, 'b', tP, yP, 'r', 'LineWidth', 1.5); hold on;
 yline(0, 'k--'); yline([-5 5], 'k:'); grid on; ylabel('simpangan dari tengah (cm)'); xlabel('waktu (s)');
-legend('PID-Fuzzy', 'PID tetap', 'setpoint (tengah)', 'pita \pm5 cm'); title('Posisi lateral robot');
+legend(HF.metode, nmP, 'setpoint (tengah)', 'pita \pm5 cm'); title('Posisi lateral robot');
 LF = HF.log; LP = HP.log; t1 = (LF.ms - LF.ms(1))/1000; t2 = (LP.ms - LP.ms(1))/1000;
 nexttile; plot(t1, LF.e, 'b', t2, LP.e, 'r', 'LineWidth', 1.2); grid on; ylabel('e (cm)'); xlabel('waktu (s)'); title('Error (log)');
 nexttile; stairs(t1, LF.sudut, 'b', 'LineWidth', 1.2); hold on; stairs(t2, LP.sudut, 'r', 'LineWidth', 1.2);

@@ -1,9 +1,9 @@
 Metrik,PID_Fuzzy,PID_tetap
 Simpangan puncak (cm),10,10
-Overshoot (cm),2.986,3.029
-Overshoot (%),29.856,30.286
-Settling time +/-5 cm (s),2.54,3.11
-Steady-state error (cm),1.409,1.463
-IAE (cm.s),64.78,75.732
-ISE (cm^2.s),270.015,317.5
-RMSE (cm),2.966,3.157
+Overshoot (cm),2.906,2.816
+Overshoot (%),29.056,28.165
+Settling time +/-5 cm (s),2.48,3.04
+Steady-state error (cm),1.709,1.857
+IAE (cm.s),64.426,66.47
+ISE (cm^2.s),266.163,282.548
+RMSE (cm),2.954,3.022
